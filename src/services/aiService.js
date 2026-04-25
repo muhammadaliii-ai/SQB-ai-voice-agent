@@ -1,136 +1,171 @@
-const dictionary = {
-  fraud: ['fraud', 'scam', 'stolen', 'not make', 'suspicious', 'yechildi', 'qilmagan', 'firib', 'shubhali', 'списали', 'мошен', 'подозр'],
-  balance: ['balance', 'hisob', 'balans', 'qoldiq', 'остаток', 'баланс'],
-  cardIssue: ['card', 'karta', 'humo', 'uzcard', 'lost', 'block', 'yo‘qoldi', "yo'qoldi", 'blok', 'карта', 'потер', 'заблок'],
-  transfer: ['transfer', 'o‘tkazma', "o'tkazma", 'перевод', 'отправил', 'задерж'],
-  complaint: ['complaint', 'complain', 'shikoyat', 'norozi', 'angry', 'жалоб', 'недовол', 'возмущ'],
+const intentKeywords = {
+  fraud: ['pul yechildi', 'yechildi', 'karta', 'humo', 'uzcard', 'списали', 'карта', 'деньги сняли'],
+  loan: ['kredit', 'qarz', 'mikroqarz', 'кредит', 'займ'],
+  balance: ['balans', 'qoldiq', 'balance', 'баланс', 'остаток'],
+  cardBlock: ['kartani bloklash', 'kartam yo‘qoldi', "kartam yo'qoldi", 'заблокировать карту', 'потерял карту', 'потеряла карту'],
+  sqbMobile: ['sqb mobile', 'ilova', 'приложение', 'mobil banking'],
 }
 
-const angryWords = ['angry', 'terrible', 'norozi', 'zudlik', 'hoziroq', 'жалоб', 'срочно', 'возмущ', 'ужас']
-const worriedWords = ['worried', 'xavotir', 'qo‘rq', "qo'rq", 'shubha', 'не знаю', 'боюсь', 'пережива']
-
-const content = {
-  uz: {
-    fraud: {
-      response: 'Tushunarli. Xavfsizlik uchun kartangizni vaqtincha bloklaymiz va tekshiruvni boshlaymiz. Iltimos, PIN, SMS kod yoki karta parolini hech kimga aytmang. Operatsiya tafsilotlarini dispute jarayoniga kiritaman.',
-      offer: 'SQB Mobile’da karta limitlari va push-xabarnomalarni yoqishni taklif qiling.',
-      compliance: 'Shaxsni tasdiqlang. PIN, SMS kod, CVV yoki parol so‘ramang. Shubhali operatsiyada karta bloklash va dispute arizasi majburiy.',
-    },
-    balance: {
-      response: 'Balansni xavfsiz tekshirish uchun mijozni SQB Mobile yoki rasmiy SMS/USSD kanaliga yo‘naltiramiz. Shaxs tasdiqlangandan keyin hisob holati bo‘yicha umumiy ma’lumot bera olaman.',
-      offer: 'SQB Mobile’da tezkor balans va xarajat monitoringini ulang.',
-      compliance: 'Balans ma’lumotini faqat shaxs tasdiqlangandan keyin ayting.',
-    },
-    cardIssue: {
-      response: 'Kartangiz bo‘yicha xavfsizlik choralarini boshlaymiz. Agar karta yo‘qolgan bo‘lsa, uni vaqtincha bloklaymiz, keyin HUMO yoki Uzcard qayta chiqarish bo‘yicha ariza ochamiz.',
-      offer: 'Virtual Visa karta yoki karta sug‘urtasini tavsiya qiling.',
-      compliance: 'Karta bloklashdan oldin shaxsni tasdiqlang. Maxfiy kodlarni so‘ramang.',
-    },
-    transfer: {
-      response: 'Pul o‘tkazma holatini tekshiramiz. HUMO/Uzcard ichki o‘tkazmalarida texnik kechikish bo‘lishi mumkin. Tranzaksiya raqami va vaqtini qayd etib, monitoringga yuboraman.',
-      offer: 'SQB Mobile’da saqlangan to‘lovlar va avtomatik cheklarni taklif qiling.',
-      compliance: 'To‘liq karta raqami yoki SMS kod talab qilmang. Faqat xavfsiz identifikatorlardan foydalaning.',
-    },
-    complaint: {
-      response: 'Murojaatingizni qabul qildim. Shikoyatni rasmiy tartibda ro‘yxatdan o‘tkazamiz, mas’ul bo‘limga yuboramiz va javob muddati bo‘yicha sizni xabardor qilamiz.',
-      offer: 'Mijozga rasmiy murojaat raqamini SMS orqali yuborishni taklif qiling.',
-      compliance: 'Shikoyatni neytral tilda qayd eting. Va’da bermang, rasmiy muddatlarni ayting.',
-    },
-    unknown: {
-      response: 'Aniq va xavfsiz yordam berish uchun savolingizni qisqacha aniqlashtirib olaman. SQB xizmatlari, karta, kredit, pul o‘tkazma yoki dispute bo‘yicha yordam bera olaman.',
-      offer: 'SQB Mobile ilovasini asosiy self-service kanal sifatida taklif qiling.',
-      compliance: 'Noaniq yoki yuqori xavfli holatni mutaxassisga eskalatsiya qiling.',
-    },
-  },
-  ru: {
-    fraud: {
-      response: 'Понимаю. Для безопасности временно заблокируем карту и начнем проверку. Пожалуйста, никому не сообщайте PIN, SMS-код или пароль карты. Детали операции внесу в процесс dispute.',
-      offer: 'Предложите включить лимиты и push-уведомления в SQB Mobile.',
-      compliance: 'Подтвердите личность. Не запрашивайте PIN, SMS-код, CVV или пароль. При подозрительной операции обязательны блокировка и dispute.',
-    },
-    balance: {
-      response: 'Баланс безопаснее проверить через SQB Mobile или официальный SMS/USSD канал. После подтверждения личности я могу дать общую информацию по состоянию счета.',
-      offer: 'Предложите быстрый баланс и мониторинг расходов в SQB Mobile.',
-      compliance: 'Сообщайте данные по счету только после подтверждения личности.',
-    },
-    cardIssue: {
-      response: 'Начинаем меры безопасности по карте. Если карта потеряна, временно блокируем ее, затем оформляем заявку на перевыпуск HUMO или Uzcard.',
-      offer: 'Предложите виртуальную Visa карту или защиту карты.',
-      compliance: 'Перед блокировкой подтвердите личность. Не запрашивайте секретные коды.',
-    },
-    transfer: {
-      response: 'Проверим статус перевода. По внутренним переводам HUMO/Uzcard возможна техническая задержка. Зафиксирую номер и время транзакции и передам на мониторинг.',
-      offer: 'Предложите сохраненные платежи и автоматические чеки в SQB Mobile.',
-      compliance: 'Не запрашивайте полный номер карты или SMS-код. Используйте безопасные идентификаторы.',
-    },
-    complaint: {
-      response: 'Ваше обращение принято. Зарегистрируем жалобу официально, передадим ответственному подразделению и сообщим срок ответа.',
-      offer: 'Предложите отправить номер обращения по SMS.',
-      compliance: 'Фиксируйте жалобу нейтрально. Не обещайте результат, называйте официальные сроки.',
-    },
-    unknown: {
-      response: 'Чтобы помочь точно и безопасно, уточню ваш вопрос. Я могу помочь по услугам SQB, картам, кредитам, переводам и dispute.',
-      offer: 'Предложите SQB Mobile как основной self-service канал.',
-      compliance: 'Неясный или рискованный сценарий передайте специалисту.',
-    },
-  },
-  en: {
-    fraud: {
-      response: 'Understood. For security, we will temporarily lock your card and start an investigation. Please do not share your PIN, SMS code, or card password. I will register the transaction details for the dispute process.',
-      offer: 'Offer card limits and push alerts in SQB Mobile.',
-      compliance: 'Verify identity. Never ask for PIN, SMS code, CVV, or password. Suspicious transactions require card lock and dispute case.',
-    },
-    balance: {
-      response: 'The safest way to check balance is SQB Mobile or an official SMS/USSD channel. After identity verification, I can provide general account status information.',
-      offer: 'Offer instant balance and spending monitoring in SQB Mobile.',
-      compliance: 'Share account information only after identity verification.',
-    },
-    cardIssue: {
-      response: 'We will start card security actions. If the card is lost, we temporarily lock it, then open a reissue request for HUMO or Uzcard.',
-      offer: 'Offer a virtual Visa card or card protection.',
-      compliance: 'Verify identity before locking a card. Never request secret codes.',
-    },
-    transfer: {
-      response: 'We will check the transfer status. HUMO/Uzcard internal transfers can have a technical delay. I will record the transaction ID and time for monitoring.',
-      offer: 'Offer saved payments and automatic receipts in SQB Mobile.',
-      compliance: 'Do not request full card number or SMS code. Use safe identifiers only.',
-    },
-    complaint: {
-      response: 'Your complaint has been accepted. We will register it officially, route it to the responsible team, and inform you about the response timeline.',
-      offer: 'Offer to send the case number by SMS.',
-      compliance: 'Record complaints neutrally. Do not promise an outcome; state official timelines.',
-    },
-    unknown: {
-      response: 'To help accurately and safely, I will clarify your question. I can help with SQB services, cards, loans, transfers, and dispute cases.',
-      offer: 'Offer SQB Mobile as the primary self-service channel.',
-      compliance: 'Escalate unclear or high-risk cases to a specialist.',
-    },
-  },
+function hasKeyword(text, keywords) {
+  return keywords.some((keyword) => text.includes(keyword))
 }
 
-function includesAny(value, words) {
-  return words.some((word) => value.includes(word))
+function detectLargeAmount(text) {
+  const normalized = text.replace(/\s/g, '')
+  const matches = normalized.match(/\d+/g) || []
+  return matches.some((value) => Number(value) >= 1000000)
 }
 
-export function getAIResponse(message, language = 'uz') {
-  const text = message.toLowerCase()
-  let intent = 'unknown'
+function localizeIntent(intent, lang) {
+  const labels = {
+    uz: {
+      fraud: 'Fraud',
+      loan: 'Loan',
+      balance: 'Balance',
+      cardBlock: 'Card block',
+      sqbMobile: 'SQB Mobile',
+      default: 'General banking',
+    },
+    ru: {
+      fraud: 'Мошенничество',
+      loan: 'Кредит',
+      balance: 'Баланс',
+      cardBlock: 'Блокировка карты',
+      sqbMobile: 'SQB Mobile',
+      default: 'Общий банковский вопрос',
+    },
+    en: {
+      fraud: 'Fraud',
+      loan: 'Loan',
+      balance: 'Balance',
+      cardBlock: 'Card block',
+      sqbMobile: 'SQB Mobile',
+      default: 'General banking',
+    },
+  }
 
-  if (includesAny(text, dictionary.fraud)) intent = 'fraud'
-  else if (includesAny(text, dictionary.balance)) intent = 'balance'
-  else if (includesAny(text, dictionary.cardIssue)) intent = 'card issue'
-  else if (includesAny(text, dictionary.transfer)) intent = 'transfer'
-  else if (includesAny(text, dictionary.complaint)) intent = 'complaint'
+  return labels[lang]?.[intent] || labels.en[intent] || labels.en.default
+}
 
-  const sentiment = includesAny(text, angryWords) ? 'angry' : includesAny(text, worriedWords) || intent === 'fraud' ? 'worried' : 'calm'
-  const normalizedIntent = intent === 'card issue' ? 'cardIssue' : intent
-  const pack = content[language]?.[normalizedIntent] || content[language]?.unknown || content.uz.unknown
+function defaultCopy(lang) {
+  if (lang === 'ru') {
+    return 'Я уточню детали и помогу безопасно. Если вопрос требует доступа к персональным данным или ручной проверки, я передам обращение специалисту SQB.'
+  }
+
+  if (lang === 'en') {
+    return 'I will clarify the details and help safely. If the request needs personal data access or manual review, I will transfer the case to an SQB specialist.'
+  }
+
+  return 'Aniq va xavfsiz yordam berish uchun savolni qisqacha aniqlashtiraman. Agar masala shaxsiy ma’lumot yoki qo‘lda tekshiruv talab qilsa, sizni SQB mutaxassisiga ulayman.'
+}
+
+export function answerCustomerQuestion(text, lang = 'uz', customerData) {
+  const value = text.toLowerCase()
+  const isVerified = customerData.kycStatus.toLowerCase() === 'verified'
+  const isLargeAmount = detectLargeAmount(value)
+  let intent = 'default'
+  let riskLevel = 'Low'
+  let escalation = false
+  let knowledgeSource = 'SQB general support rules'
+  let complianceWarning = lang === 'ru'
+    ? 'Не запрашивайте PIN, SMS-код, CVV или пароль клиента.'
+    : lang === 'en'
+      ? 'Never request PIN, SMS code, CVV, or customer password.'
+      : 'PIN, SMS kod, CVV yoki mijoz parolini so‘ramang.'
+  let response = defaultCopy(lang)
+  let callSummary = lang === 'ru'
+    ? 'Клиент задал общий вопрос. AI предложил безопасное уточнение и эскалацию при необходимости.'
+    : lang === 'en'
+      ? 'Customer asked a general question. AI suggested safe clarification and escalation if needed.'
+      : 'Mijoz umumiy savol berdi. AI xavfsiz aniqlashtirish va kerak bo‘lsa eskalatsiyani tavsiya qildi.'
+
+  if (hasKeyword(value, intentKeywords.cardBlock)) {
+    intent = 'cardBlock'
+    riskLevel = 'High'
+    escalation = true
+    knowledgeSource = 'SQB card security policy'
+    response = lang === 'ru'
+      ? 'Для безопасности сначала подтвердим вашу личность. После подтверждения временно заблокируем карту, оформим перевыпуск HUMO или UZCARD и проверим последние операции.'
+      : lang === 'en'
+        ? 'For security, we will first verify your identity. After verification, we will temporarily block the card, create a HUMO or UZCARD reissue request, and review recent transactions.'
+        : 'Xavfsizlik uchun avval shaxsingizni tasdiqlaymiz. Tasdiqdan keyin kartani vaqtincha bloklaymiz, HUMO yoki UZCARD qayta chiqarish arizasini ochamiz va oxirgi operatsiyalarni tekshiramiz.'
+    callSummary = lang === 'ru'
+      ? 'Запрос на блокировку карты. Требуется проверка личности, временная блокировка и перевыпуск карты.'
+      : lang === 'en'
+        ? 'Card block request. Identity verification, temporary block, and card reissue are required.'
+        : 'Karta bloklash so‘rovi. Shaxsni tasdiqlash, vaqtincha bloklash va qayta chiqarish kerak.'
+  } else if (hasKeyword(value, intentKeywords.fraud)) {
+    intent = 'fraud'
+    riskLevel = 'High'
+    escalation = isLargeAmount || !isVerified
+    knowledgeSource = 'SQB fraud and dispute process'
+    response = lang === 'ru'
+      ? 'Для безопасности сначала подтвердим вашу личность. Никому не сообщайте PIN или SMS-код. Рекомендуется временно заблокировать карту и открыть обращение по спорной операции.'
+      : lang === 'en'
+        ? 'For security, we will first verify your identity. Do not share your PIN or SMS code with anyone. We recommend temporarily blocking the card and opening a dispute case for the suspicious transaction.'
+        : 'Xavfsizlik uchun avval shaxsingizni tasdiqlaymiz. PIN yoki SMS kodni hech kimga aytmang. Kartangizni vaqtincha bloklash va shubhali operatsiya bo‘yicha ariza ochish tavsiya etiladi.'
+    callSummary = lang === 'ru'
+      ? `Подозрительная операция по карте. Эскалация: ${escalation ? 'да' : 'нет'}, причина: ${isLargeAmount ? 'крупная сумма' : isVerified ? 'клиент верифицирован' : 'KYC не подтвержден'}.`
+      : lang === 'en'
+        ? `Suspicious card transaction. Escalation: ${escalation ? 'yes' : 'no'}, reason: ${isLargeAmount ? 'large amount' : isVerified ? 'verified customer' : 'KYC not verified'}.`
+        : `Kartada shubhali operatsiya. Eskalatsiya: ${escalation ? 'ha' : 'yo‘q'}, sabab: ${isLargeAmount ? 'yirik summa' : isVerified ? 'mijoz tasdiqlangan' : 'KYC tasdiqlanmagan'}.`
+  } else if (hasKeyword(value, intentKeywords.loan)) {
+    intent = 'loan'
+    riskLevel = 'Medium'
+    knowledgeSource = 'SQB loan servicing rules'
+    complianceWarning = lang === 'ru'
+      ? 'Не гарантируйте одобрение кредита. Укажите, что решение зависит от скоринга и документов.'
+      : lang === 'en'
+        ? 'Do not guarantee loan approval. State that the decision depends on scoring and documents.'
+        : 'Kredit ma’qullanishini kafolatlamang. Qaror skoring va hujjatlarga bog‘liqligini ayting.'
+    response = lang === 'ru'
+      ? `У вас есть активный кредит ${customerData.loan.amount}, ежемесячный платеж ${customerData.loan.monthlyPayment}, следующий платеж ${customerData.loan.nextPaymentDate}. По новому кредиту можно проверить предварительную возможность, но одобрение не гарантируется и зависит от скоринга.`
+      : lang === 'en'
+        ? `You currently have an active loan of ${customerData.loan.amount}, monthly payment ${customerData.loan.monthlyPayment}, next payment date ${customerData.loan.nextPaymentDate}. We can check preliminary eligibility for a new loan, but approval is never guaranteed and depends on scoring.`
+        : `Sizda faol kredit mavjud: ${customerData.loan.amount}, oylik to‘lov ${customerData.loan.monthlyPayment}, keyingi to‘lov sanasi ${customerData.loan.nextPaymentDate}. Yangi kredit bo‘yicha dastlabki imkoniyatni tekshirish mumkin, lekin ma’qullanish kafolatlanmaydi va skoringga bog‘liq.`
+    callSummary = lang === 'ru'
+      ? 'Кредитный вопрос. AI показал активный кредит, ежемесячный платеж и осторожную рекомендацию по eligibility.'
+      : lang === 'en'
+        ? 'Loan question. AI showed active loan, monthly payment, and a careful eligibility suggestion.'
+        : 'Kredit savoli. AI faol kredit, oylik to‘lov va ehtiyotkor eligibility tavsiyasini berdi.'
+  } else if (hasKeyword(value, intentKeywords.balance)) {
+    intent = 'balance'
+    riskLevel = 'Low'
+    knowledgeSource = 'SQB customer profile balance'
+    response = lang === 'ru'
+      ? `Ваш общий доступный баланс по профилю: ${customerData.totalBalance}. Также депозит: ${customerData.depositBalance}. Для безопасности детали счетов сообщаются после подтверждения личности.`
+      : lang === 'en'
+        ? `Your total available profile balance is ${customerData.totalBalance}. Deposit balance: ${customerData.depositBalance}. For security, account details are shared after identity verification.`
+        : `Profil bo‘yicha umumiy balansingiz: ${customerData.totalBalance}. Depozit balansi: ${customerData.depositBalance}. Xavfsizlik uchun hisob tafsilotlari shaxs tasdiqlangandan keyin aytiladi.`
+    callSummary = lang === 'ru'
+      ? 'Запрос баланса. AI использовал данные профиля и напомнил о проверке личности.'
+      : lang === 'en'
+        ? 'Balance request. AI used profile data and reminded about identity verification.'
+        : 'Balans so‘rovi. AI profil ma’lumotidan foydalandi va shaxsni tasdiqlashni eslatdi.'
+  } else if (hasKeyword(value, intentKeywords.sqbMobile)) {
+    intent = 'sqbMobile'
+    riskLevel = 'Low'
+    knowledgeSource = 'SQB Mobile product knowledge'
+    response = lang === 'ru'
+      ? 'В SQB Mobile доступны платежи, переводы, управление картами, информация по кредитам, депозитам и истории операций. Если приложение не работает, проверьте интернет, версию приложения и привязанный номер телефона.'
+      : lang === 'en'
+        ? 'SQB Mobile supports payments, transfers, card management, loan information, deposits, and transaction history. If the app is not working, check internet connection, app version, and registered phone number.'
+        : 'SQB Mobile orqali to‘lovlar, pul o‘tkazmalari, karta boshqaruvi, kredit ma’lumotlari, depozitlar va operatsiyalar tarixini ko‘rish mumkin. Ilova ishlamasa, internet, ilova versiyasi va bog‘langan telefon raqamini tekshiring.'
+    callSummary = lang === 'ru'
+      ? 'Вопрос по SQB Mobile. AI объяснил функции приложения и базовую диагностику.'
+      : lang === 'en'
+        ? 'SQB Mobile question. AI explained app functions and basic troubleshooting.'
+        : 'SQB Mobile savoli. AI ilova funksiyalari va asosiy diagnostikani tushuntirdi.'
+  }
 
   return {
-    response: pack.response,
-    intent,
-    sentiment,
-    nextBestOffer: pack.offer,
-    complianceWarning: pack.compliance,
+    response,
+    intent: localizeIntent(intent, lang),
+    intentKey: intent,
+    riskLevel,
+    knowledgeSource,
+    complianceWarning,
+    escalation: escalation ? (lang === 'ru' ? 'Да' : lang === 'en' ? 'Yes' : 'Ha') : (lang === 'ru' ? 'Нет' : lang === 'en' ? 'No' : 'Yo‘q'),
+    callSummary,
   }
 }

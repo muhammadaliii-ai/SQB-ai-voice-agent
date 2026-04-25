@@ -1,73 +1,76 @@
 import { useRef, useState } from 'react'
 
-function getRecognitionApi() {
-  return window.SpeechRecognition || window.webkitSpeechRecognition
-}
-
-function speechLang(language) {
-  if (language === 'ru') return 'ru-RU'
-  if (language === 'en') return 'en-US'
+function speechLang(lang) {
+  if (lang === 'ru') return 'ru-RU'
+  if (lang === 'en') return 'en-US'
   return 'uz-UZ'
 }
 
-export function useVoiceAssistant(language, labels) {
-  const [voiceStatus, setVoiceStatus] = useState(labels.ready)
-  const [voiceError, setVoiceError] = useState('')
+export function useVoiceAssistant(lang) {
+  const [voiceStatus, setVoiceStatus] = useState('Ready')
   const recognitionRef = useRef(null)
 
-  function speak(text) {
-    if (!text) return
-    setVoiceError('')
-    setVoiceStatus(labels.speaking)
+  function startVoiceInput(onTranscript) {
+    try {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
 
-    if (!('speechSynthesis' in window)) {
-      setVoiceError('TTS unavailable')
-      setVoiceStatus(labels.ready)
-      return
-    }
+      if (!SpeechRecognition) {
+        setVoiceStatus('Voice input is not supported in this browser. Please type instead.')
+        return
+      }
 
-    window.speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = speechLang(language)
-    utterance.rate = 0.96
-    utterance.pitch = 1
-    utterance.onend = () => setVoiceStatus(labels.ready)
-    utterance.onerror = () => {
-      setVoiceError('TTS unavailable')
-      setVoiceStatus(labels.ready)
+      if (recognitionRef.current) {
+        recognitionRef.current.stop()
+      }
+
+      const recognition = new SpeechRecognition()
+      recognitionRef.current = recognition
+      recognition.lang = speechLang(lang)
+      recognition.interimResults = false
+      recognition.maxAlternatives = 1
+      setVoiceStatus('Listening...')
+
+      recognition.onresult = (event) => {
+        const transcript = event.results?.[0]?.[0]?.transcript || ''
+        if (transcript) onTranscript(transcript)
+      }
+      recognition.onerror = () => {
+        setVoiceStatus('Voice input is not supported in this browser. Please type instead.')
+      }
+      recognition.onend = () => {
+        setVoiceStatus((current) => (current === 'Listening...' ? 'Ready' : current))
+      }
+      recognition.start()
+    } catch {
+      setVoiceStatus('Voice input is not supported in this browser. Please type instead.')
     }
-    window.speechSynthesis.speak(utterance)
   }
 
-  function listen(onResult) {
-    const RecognitionApi = getRecognitionApi()
-    setVoiceError('')
+  function speakAnswer(aiAnswer) {
+    try {
+      if (!('speechSynthesis' in window) || !aiAnswer) {
+        setVoiceStatus('Voice output is not available. Please read the answer on screen.')
+        return
+      }
 
-    if (!RecognitionApi) {
-      setVoiceError(labels.voiceUnsupported)
-      return
+      window.speechSynthesis.cancel()
+      const utterance = new SpeechSynthesisUtterance(aiAnswer)
+      utterance.lang = speechLang(lang)
+
+      const voices = window.speechSynthesis.getVoices()
+      const targetVoice = voices.find((voice) => voice.lang === utterance.lang)
+      if (targetVoice) {
+        utterance.voice = targetVoice
+      }
+
+      utterance.onstart = () => setVoiceStatus('Speaking...')
+      utterance.onend = () => setVoiceStatus('Ready')
+      utterance.onerror = () => setVoiceStatus('Voice output failed. Please read the answer on screen.')
+      window.speechSynthesis.speak(utterance)
+    } catch {
+      setVoiceStatus('Voice output failed. Please read the answer on screen.')
     }
-
-    if (recognitionRef.current) recognitionRef.current.stop()
-
-    const recognition = new RecognitionApi()
-    recognitionRef.current = recognition
-    recognition.lang = speechLang(language)
-    recognition.interimResults = false
-    recognition.maxAlternatives = 1
-    setVoiceStatus(labels.listening)
-
-    recognition.onresult = (event) => {
-      const transcript = event.results[0]?.[0]?.transcript || ''
-      if (transcript) onResult(transcript)
-    }
-    recognition.onerror = () => {
-      setVoiceError(labels.voiceUnsupported)
-      setVoiceStatus(labels.ready)
-    }
-    recognition.onend = () => setVoiceStatus((current) => (current === labels.listening ? labels.ready : current))
-    recognition.start()
   }
 
-  return { voiceStatus, voiceError, speak, listen, setVoiceStatus }
+  return { voiceStatus, setVoiceStatus, startVoiceInput, speakAnswer }
 }
