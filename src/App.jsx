@@ -1,448 +1,563 @@
 import { useState } from 'react'
 import './App.css'
-import { useVoiceAssistant } from './hooks/useVoiceAssistant'
-import { answerCustomerQuestion } from './services/aiService'
-import { customerData } from './services/customerData'
 
-const languages = ['uz', 'ru', 'en']
-const navItems = ['Overview', 'Customer profile', 'Cards', 'Loans', 'Transactions', 'Security', 'AI Call Center']
-
-const labels = {
-  uz: {
-    subtitle: 'Automated customer support for SQB Bank',
-    phone: 'Customer phone number',
-    start: 'Start AI Call',
-    search: 'Search customer, card, transaction...',
-    online: 'AI Operator Online',
-    mode: 'Autonomous AI',
-    overview: 'Customer overview',
-    profile: 'Customer profile',
-    cards: 'Active cards',
-    loan: 'Active loan',
-    deposit: 'Deposit balance',
-    transactions: 'Last 5 transactions',
-    history: 'Recent support history',
-    alerts: 'Security alerts',
-    transcript: 'Customer question transcript',
-    answer: 'AI answer',
-    askPlaceholder: 'Customer asks...',
-    ask: 'Ask AI',
-    voice: 'Start voice input',
-    speak: 'Speak answer',
-    intent: 'Detected intent',
-    risk: 'Risk level',
-    source: 'Knowledge source',
-    compliance: 'Compliance warning',
-    escalation: 'Escalation',
-    summary: 'Call summary',
-    kyc: 'KYC status',
-    riskScore: 'Risk score',
-    balance: 'Total balance',
-    clientId: 'Client ID',
-    phoneLabel: 'Phone',
-    monthlyPayment: 'Monthly payment',
-    nextPayment: 'Next payment date',
-    quickQuestions: [
-      'Mening HUMO kartamdan 250 000 so‘m pul yechildi',
-      'Balansim qancha?',
-      'Kreditim bo‘yicha keyingi to‘lov qachon?',
-      'Kartamni yo‘qotdim',
-    ],
-    initialQuestion: 'Mening HUMO kartamdan 250 000 so‘m pul yechildi',
+const customerData = {
+  name: 'Azizbek Karimov',
+  phone: '+998 90 123 45 67',
+  clientId: 'SQB-204918',
+  kyc: 'Verified',
+  riskScore: 'Low',
+  totalBalance: '14,250,000 so‘m',
+  cards: [
+    { type: 'HUMO card', number: '**** 4821', balance: '3,400,000 so‘m' },
+    { type: 'UZCARD', number: '**** 1190', balance: '850,000 so‘m' },
+    { type: 'Visa Virtual', number: '**** 7742', balance: '120 USD' },
+  ],
+  loan: {
+    amount: '45,000,000 so‘m',
+    monthlyPayment: '3,200,000 so‘m',
+    nextPaymentDate: '05.05.2026',
   },
-  ru: {
-    subtitle: 'Automated customer support for SQB Bank',
-    phone: 'Номер телефона клиента',
-    start: 'Start AI Call',
-    search: 'Поиск клиента, карты, транзакции...',
-    online: 'AI Operator Online',
-    mode: 'Autonomous AI',
-    overview: 'Обзор клиента',
-    profile: 'Профиль клиента',
-    cards: 'Активные карты',
-    loan: 'Активный кредит',
-    deposit: 'Депозит',
-    transactions: 'Последние 5 операций',
-    history: 'Последние обращения',
-    alerts: 'Security alerts',
-    transcript: 'Транскрипт вопроса клиента',
-    answer: 'Ответ AI',
-    askPlaceholder: 'Customer asks...',
-    ask: 'Ask AI',
-    voice: 'Start voice input',
-    speak: 'Speak answer',
-    intent: 'Detected intent',
-    risk: 'Risk level',
-    source: 'Knowledge source',
-    compliance: 'Compliance warning',
-    escalation: 'Escalation',
-    summary: 'Call summary',
-    kyc: 'KYC status',
-    riskScore: 'Risk score',
-    balance: 'Total balance',
-    clientId: 'Client ID',
-    phoneLabel: 'Phone',
-    monthlyPayment: 'Monthly payment',
-    nextPayment: 'Next payment date',
-    quickQuestions: [
-      'С моей HUMO карты списали 250 000 сум',
-      'Какой у меня баланс?',
-      'Когда следующий платеж по кредиту?',
-      'Я потерял карту',
-    ],
-    initialQuestion: 'С моей HUMO карты списали 250 000 сум',
-  },
-  en: {
-    subtitle: 'Automated customer support for SQB Bank',
-    phone: 'Customer phone number',
-    start: 'Start AI Call',
-    search: 'Search customer, card, transaction...',
-    online: 'AI Operator Online',
-    mode: 'Autonomous AI',
-    overview: 'Customer overview',
-    profile: 'Customer profile',
-    cards: 'Active cards',
-    loan: 'Active loan',
-    deposit: 'Deposit balance',
-    transactions: 'Last 5 transactions',
-    history: 'Recent support history',
-    alerts: 'Security alerts',
-    transcript: 'Customer question transcript',
-    answer: 'AI answer',
-    askPlaceholder: 'Customer asks...',
-    ask: 'Ask AI',
-    voice: 'Start voice input',
-    speak: 'Speak answer',
-    intent: 'Detected intent',
-    risk: 'Risk level',
-    source: 'Knowledge source',
-    compliance: 'Compliance warning',
-    escalation: 'Escalation',
-    summary: 'Call summary',
-    kyc: 'KYC status',
-    riskScore: 'Risk score',
-    balance: 'Total balance',
-    clientId: 'Client ID',
-    phoneLabel: 'Phone',
-    monthlyPayment: 'Monthly payment',
-    nextPayment: 'Next payment date',
-    quickQuestions: [
-      'A 250,000 som payment was charged from my HUMO card',
-      'What is my balance?',
-      'When is my next loan payment?',
-      'I lost my card',
-    ],
-    initialQuestion: 'A 250,000 som payment was charged from my HUMO card',
-  },
+  deposit: '25,000,000 so‘m',
+  transactions: [
+    ['250,000 so‘m', 'Uzum Market'],
+    ['45,000 so‘m', 'Payme'],
+    ['1,200,000 so‘m', 'Salary incoming'],
+    ['120,000 so‘m', 'Yandex Go'],
+    ['500,000 so‘m', 'ATM withdrawal'],
+  ],
 }
 
-function MetricCard({ label, value, tone }) {
+const baseReasons = [
+  { label: 'Loan due date / next payment', value: 35, key: 'Loan due date' },
+  { label: 'Card balance / transaction questions', value: 18, key: 'Balance inquiry' },
+  { label: 'SQB Mobile app issues', value: 14, key: 'SQB Mobile issue' },
+  { label: 'Card block / suspicious transaction', value: 11, key: 'Suspicious card transaction' },
+  { label: 'Loan application / product info', value: 9, key: 'Loan product info' },
+  { label: 'Deposit / savings questions', value: 6, key: 'Deposit questions' },
+  { label: 'Other / unknown', value: 7, key: 'Unknown / needs clustering' },
+]
+
+const demos = [
+  { label: 'Loan due date question', text: 'Assalomu alaykum, kreditim bo‘yicha keyingi to‘lov qachonligini bilmoqchi edim.' },
+  { label: 'Balance question', text: 'Hisobimda qancha qoldiq bor, balansni aytib bera olasizmi?' },
+  { label: 'Suspicious card transaction', text: 'Kartamdan pul yechildi, men qilmaganman, shubhali operatsiya.' },
+  { label: 'SQB Mobile problem', text: 'SQB Mobile ilovasiga kirib bo‘lmayapti, pul o‘tkazma ishlamayapti.' },
+  { label: 'Unknown question', text: 'Bankomatdan yechish limitini oshirish va karta yetkazib berish holatini bilmoqchiman.' },
+]
+
+const unknownSeeds = [
+  'Loan restructuring questions',
+  'Mobile app login errors',
+  'Card delivery status',
+  'ATM cash withdrawal limit',
+]
+
+const initialAnalysis = {
+  category: 'Loan due date',
+  confidence: 96,
+  sentiment: 'Neutral',
+  response: 'Sizning keyingi kredit to‘lovingiz 05.05.2026 kuni. Oylik to‘lov miqdori 3 200 000 so‘m.',
+  compliance: 'Verify identity before sharing account details',
+  escalation: 'No',
+  action: 'Confirm customer identity, then provide due date and monthly payment.',
+  risk: 'Low',
+}
+
+function analyzeCall(text, language, customer) {
+  const normalized = text.toLowerCase()
+  const rules = [
+    {
+      category: 'Loan due date',
+      confidence: 96,
+      sentiment: 'Neutral',
+      risk: 'Low',
+      escalation: 'No',
+      keywords: ['keyingi to‘lov', 'keyingi tolov', 'to‘lov qachon', 'tolov qachon', 'kredit to‘lovi', 'kredit tolovi', 'oylik to‘lov', 'oylik tolov', 'следующий платеж', 'когда платить', 'платеж по кредиту'],
+      uz: `Sizning keyingi kredit to‘lovingiz ${customer.loan.nextPaymentDate} kuni. Oylik to‘lov miqdori ${customer.loan.monthlyPayment}.`,
+      ru: `Ваш следующий платеж по кредиту — ${customer.loan.nextPaymentDate}. Ежемесячный платеж составляет ${customer.loan.monthlyPayment.replace('so‘m', 'сум')}.`,
+      compliance: 'Verify identity before sharing personal account details',
+      action: 'Confirm KYC, explain payment date, and offer automatic reminder setup.',
+    },
+    {
+      category: 'Balance inquiry',
+      confidence: 94,
+      sentiment: 'Neutral',
+      risk: 'Low',
+      escalation: 'No',
+      keywords: ['balans', 'qoldiq', 'hisobimda qancha', 'баланс', 'остаток', 'сколько на счету'],
+      uz: 'Sizning umumiy balansingiz 14 250 000 so‘m. HUMO kartada 3 400 000 so‘m, UZCARD kartada 850 000 so‘m mavjud.',
+      ru: 'Ваш общий баланс — 14 250 000 сум. На HUMO карте 3 400 000 сум, на UZCARD — 850 000 сум.',
+      compliance: 'Verify identity before balance disclosure',
+      action: 'Complete KYC verification, then summarize total and card balances.',
+    },
+    {
+      category: 'Suspicious card transaction',
+      confidence: 91,
+      sentiment: 'Worried',
+      risk: 'High',
+      escalation: 'Yes',
+      keywords: ['pul yechildi', 'men qilmaganman', 'shubhali', 'karta', 'списали', 'я не совершал', 'подозрительная операция', 'карта'],
+      uz: 'Xavfsizlik uchun avval shaxsingizni tasdiqlaymiz. PIN yoki SMS kodni hech kimga aytmang. Kartani vaqtincha bloklash va shubhali operatsiya bo‘yicha ariza ochish tavsiya etiladi.',
+      ru: 'Для безопасности сначала подтвердим вашу личность. Никому не сообщайте PIN или SMS-код. Рекомендуется временно заблокировать карту и открыть обращение по спорной операции.',
+      compliance: 'Never ask PIN or SMS code',
+      action: 'Block card temporarily, open dispute case, and escalate to fraud queue.',
+    },
+    {
+      category: 'SQB Mobile issue',
+      confidence: 89,
+      sentiment: 'Worried',
+      risk: 'Medium',
+      escalation: 'No',
+      keywords: ['sqb mobile', 'ilova', 'kirib bo‘lmayapti', 'kirib bolmayapti', 'pul o‘tkazma', 'pul otkazma', 'приложение', 'не могу войти', 'перевод'],
+      uz: 'SQB Mobile bo‘yicha muammoni tekshirish uchun internet aloqasi, ilova versiyasi va telefon raqamingiz bankda ro‘yxatdan o‘tganini tekshiramiz.',
+      ru: 'Для проверки проблемы в SQB Mobile уточним интернет-соединение, версию приложения и привязку номера телефона к банку.',
+      compliance: 'Do not request passwords, PIN, or SMS codes',
+      action: 'Check app version, registered phone number, and recent transfer status.',
+    },
+  ]
+
+  const match = rules.find((rule) => rule.keywords.some((keyword) => normalized.includes(keyword)))
+
+  if (!match) {
+    return {
+      category: 'Unknown / needs clustering',
+      confidence: 42,
+      sentiment: 'Neutral',
+      risk: 'Medium',
+      escalation: 'Review',
+      response: language === 'ru'
+        ? 'Это обращение будет отмечено как новая категория, и система обучится после ответа оператора.'
+        : 'Bu murojaatni yangi kategoriya sifatida belgilab, operator javobidan keyin tizimga o‘rgatamiz.',
+      compliance: 'Operator answer should be reviewed before automation',
+      action: 'Add to unknown cluster, collect operator resolution, and prepare a new category.',
+    }
+  }
+
+  return {
+    category: match.category,
+    confidence: match.confidence,
+    sentiment: match.sentiment,
+    risk: match.risk,
+    escalation: match.escalation,
+    response: language === 'ru' ? match.ru : match.uz,
+    compliance: match.compliance,
+    action: match.action,
+  }
+}
+
+function Header({ language, setLanguage, currentTime }) {
   return (
-    <section className={`metric-card ${tone || ''}`}>
+    <header className="top-header">
+      <div>
+        <p className="eyebrow">SQB Bank management dashboard</p>
+        <h1>SQB Call Intelligence AI</h1>
+        <span>Real-time call listener + demand analytics for SQB Bank</span>
+      </div>
+      <div className="header-actions">
+        <span className="live-status"><i />Live monitoring</span>
+        <div className="language-switch">
+          {['uz', 'ru'].map((item) => (
+            <button className={language === item ? 'active' : ''} key={item} type="button" onClick={() => setLanguage(item)}>
+              {item.toUpperCase()}
+            </button>
+          ))}
+        </div>
+        <time>{currentTime}</time>
+        <button className="primary-button" type="button">Export report</button>
+      </div>
+    </header>
+  )
+}
+
+function Sidebar() {
+  return (
+    <aside className="sidebar">
+      <div className="brand-mark">SQB</div>
+      {['Live Calls', 'Demand Analytics', 'Customer Profile', 'Operator Assist', 'Compliance', 'Reports'].map((item, index) => (
+        <button className={index === 0 ? 'active' : ''} key={item} type="button">{item}</button>
+      ))}
+    </aside>
+  )
+}
+
+function StatCard({ label, value, detail }) {
+  return (
+    <article className="stat-card">
       <span>{label}</span>
       <strong>{value}</strong>
-    </section>
+      {detail ? <small>{detail}</small> : null}
+    </article>
   )
 }
 
-function DataCard({ title, children, className = '' }) {
+function DemandAnalytics({ reasons }) {
+  const total = reasons.reduce((sum, item) => sum + item.value, 0)
   return (
-    <section className={`data-card ${className}`}>
-      <div className="card-title">
-        <h2>{title}</h2>
+    <section className="card wide-card">
+      <div className="section-title">
+        <div>
+          <p className="eyebrow">Demand analytics</p>
+          <h2>Most common call reasons</h2>
+        </div>
+        <strong>{total}% classified distribution</strong>
       </div>
-      {children}
+      <div className="reason-grid">
+        {reasons.map((reason) => (
+          <article className="reason-row" key={reason.key}>
+            <div>
+              <span>{reason.label}</span>
+              <b>{reason.value}%</b>
+            </div>
+            <div className="bar"><i style={{ width: `${reason.value * 2.35}%` }} /></div>
+          </article>
+        ))}
+      </div>
+      <div className="insight-card">
+        <b>Insight</b>
+        <p>Most common reason today: loan payment due date. Recommend adding automatic IVR/AI answer for due-date questions.</p>
+      </div>
     </section>
   )
 }
 
-function LanguageSwitch({ language, onChange }) {
+function Transcript({ messages }) {
   return (
-    <div className="language-switch" aria-label="Language switch">
-      {languages.map((item) => (
-        <button className={language === item ? 'active' : ''} key={item} type="button" onClick={() => onChange(item)}>
-          {item.toUpperCase()}
-        </button>
+    <div className="transcript">
+      {messages.map((message) => (
+        <article className={message.role === 'AI' ? 'ai-message' : ''} key={message.id}>
+          <span>{message.role}</span>
+          <p>{message.text}</p>
+        </article>
       ))}
     </div>
   )
 }
 
-function Dashboard({
-  activeNav,
-  setActiveNav,
-  lang,
-  setLang,
-  copy,
-  search,
-  setSearch,
-  question,
-  setQuestion,
-  aiResult,
-  askAI,
-  isThinking,
-  voiceStatus,
-  startVoiceInput,
-  speakAnswer,
-  blurred = false,
-}) {
+function CustomerProfile() {
   return (
-    <main className={`app-shell ${blurred ? 'is-blurred' : ''}`}>
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-logo">SQB</div>
-          <div>
-            <strong>SQB Bank</strong>
-            <span>AI Operations</span>
-          </div>
+    <section className="card profile-card">
+      <div className="section-title">
+        <div>
+          <p className="eyebrow">Customer profile</p>
+          <h2>{customerData.name}</h2>
         </div>
-        <nav>
-          {navItems.map((item) => (
-            <button className={activeNav === item ? 'active' : ''} key={item} type="button" onClick={() => setActiveNav(item)}>
-              <span />
-              {item}
-            </button>
-          ))}
-        </nav>
-      </aside>
+        <span className="risk-pill">Risk score: {customerData.riskScore}</span>
+      </div>
+      <div className="profile-grid">
+        <span>Phone<b>{customerData.phone}</b></span>
+        <span>Client ID<b>{customerData.clientId}</b></span>
+        <span>KYC<b>{customerData.kyc}</b></span>
+        <span>Total balance<b>{customerData.totalBalance}</b></span>
+      </div>
+      <div className="asset-list">
+        {customerData.cards.map((card) => (
+          <article key={card.number}>
+            <span>{card.type} {card.number}</span>
+            <b>{card.balance}</b>
+          </article>
+        ))}
+      </div>
+      <div className="loan-grid">
+        <span>Active loan<b>{customerData.loan.amount}</b></span>
+        <span>Monthly payment<b>{customerData.loan.monthlyPayment}</b></span>
+        <span>Next payment date<b>{customerData.loan.nextPaymentDate}</b></span>
+        <span>Deposit<b>{customerData.deposit}</b></span>
+      </div>
+      <h3>Last transactions</h3>
+      <div className="transaction-list">
+        {customerData.transactions.map(([amount, merchant]) => (
+          <article key={`${amount}-${merchant}`}>
+            <span>{merchant}</span>
+            <b>{amount}</b>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
 
-      <section className="workspace">
-        <header className="topbar">
-          <label className="search-box">
-            <span>Search</span>
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={copy.search} />
-          </label>
-          <div className="topbar-actions">
-            <LanguageSwitch language={lang} onChange={setLang} />
-            <div className="status-pill">
-              <span />
-              {copy.online}
-            </div>
-            <div className="mode-pill">{copy.mode}</div>
-          </div>
-        </header>
+function OperatorAssist({ analysis }) {
+  return (
+    <section className="card assist-card">
+      <p className="eyebrow">Operator assist</p>
+      <h2>AI suggestions</h2>
+      <div className="assist-list">
+        <article><span>What to say next</span><p>{analysis.response}</p></article>
+        <article><span>Next best offer</span><p>Offer payment reminder setup and SQB Mobile self-service guide.</p></article>
+        <article><span>Required KYC/compliance step</span><p>{analysis.compliance}</p></article>
+        <article><span>Risk warning</span><p>{analysis.risk === 'High' ? 'High-risk financial complaint. Escalate and protect card immediately.' : 'No critical risk detected after standard verification.'}</p></article>
+      </div>
+    </section>
+  )
+}
 
-        <section className="content-grid">
-          <section className="main-content">
-            <div className="profile-hero">
-              <div>
-                <p>{copy.overview}</p>
-                <h1>{customerData.name}</h1>
-                <div className="identity-row">
-                  <span>{copy.phoneLabel}: {customerData.phone}</span>
-                  <span>{copy.clientId}: {customerData.clientId}</span>
-                </div>
-              </div>
-              <div className="kyc-badge">{customerData.kycStatus}</div>
-            </div>
+function UnknownCalls({ unknownShare, clusters, categoryCreated, onCreate }) {
+  return (
+    <section className="card">
+      <div className="section-title">
+        <div>
+          <p className="eyebrow">Learning module</p>
+          <h2>Unclassified / Unknown Calls</h2>
+        </div>
+        <strong>{unknownShare}% unknown share</strong>
+      </div>
+      <p className="body-copy">AI groups unknown calls by similarity so supervisors can create new categories instead of expecting perfect detection on day one.</p>
+      <div className="cluster-list">
+        {clusters.map((cluster) => <span key={cluster}>{cluster}</span>)}
+      </div>
+      <button className="secondary-button" type="button" onClick={onCreate}>Create new category from cluster</button>
+      {categoryCreated ? <div className="success-note">Category created: ATM cash withdrawal limit</div> : null}
+    </section>
+  )
+}
 
-            <div className="metric-grid">
-              <MetricCard label={copy.balance} value={customerData.totalBalance} />
-              <MetricCard label={copy.kyc} value={customerData.kycStatus} tone="success" />
-              <MetricCard label={copy.riskScore} value={customerData.riskScore} tone="success" />
-              <MetricCard label={copy.deposit} value={customerData.depositBalance} />
-            </div>
+function PlatformCards() {
+  const modules = [
+    ['Speech-to-text module', 'Uzbek/Russian/English transcription under 500ms'],
+    ['Conversation Intelligence', 'Intent, sentiment, and objection detection'],
+    ['Knowledge Base + RAG', 'Bank products, rates, scripts, FAQ, compliance rules'],
+    ['Recommendation Engine', 'Next best action based on ABS/CRM/scoring/context'],
+    ['Agent UI overlay', 'Suggestions without interrupting the operator'],
+    ['Supervisor Dashboard', 'Live monitoring and barging-in for critical calls'],
+    ['Analytics', 'Conversion, script compliance, call duration, strong/weak points'],
+    ['Training mode', 'Simulated calls for new agents'],
+    ['Integrations', 'Asterisk/Cisco/Avaya, CRM, ABS, scoring, Knowledge Base, QA system'],
+    ['KPI', 'Conversion +15%, script compliance ≥95%, handling time -10%, agent ramp-up -30%'],
+  ]
 
-            <div className="two-column">
-              <DataCard title={copy.cards}>
-                <div className="card-list">
-                  {customerData.cards.map((card) => (
-                    <article className="bank-card-row" key={card.number}>
-                      <div>
-                        <strong>{card.network}</strong>
-                        <span>{card.number}</span>
-                      </div>
-                      <div>
-                        <strong>{card.balance}</strong>
-                        <span>{card.status}</span>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </DataCard>
-
-              <DataCard title={copy.loan}>
-                <div className="loan-card">
-                  <span>Outstanding</span>
-                  <strong>{customerData.loan.amount}</strong>
-                  <div>
-                    <p>{copy.monthlyPayment}</p>
-                    <b>{customerData.loan.monthlyPayment}</b>
-                  </div>
-                  <div>
-                    <p>{copy.nextPayment}</p>
-                    <b>{customerData.loan.nextPaymentDate}</b>
-                  </div>
-                </div>
-              </DataCard>
-            </div>
-
-            <div className="two-column lower">
-              <DataCard title={copy.transactions}>
-                <div className="transaction-list">
-                  {customerData.transactions.map((transaction) => (
-                    <article key={`${transaction.amount}-${transaction.merchant}`}>
-                      <div>
-                        <strong>{transaction.merchant}</strong>
-                        <span>{transaction.type}</span>
-                      </div>
-                      <b>{transaction.amount}</b>
-                    </article>
-                  ))}
-                </div>
-              </DataCard>
-
-              <div className="stacked-cards">
-                <DataCard title={copy.history}>
-                  <ul className="simple-list">
-                    {customerData.supportHistory.map((item) => <li key={item}>{item}</li>)}
-                  </ul>
-                </DataCard>
-                <DataCard title={copy.alerts}>
-                  <ul className="simple-list">
-                    {customerData.securityAlerts.map((item) => <li key={item}>{item}</li>)}
-                  </ul>
-                </DataCard>
-              </div>
-            </div>
-          </section>
-
-          <aside className="ai-panel">
-            <div className="panel-heading">
-              <p>AI Call Center</p>
-              <h2>SQB AI Voice Agent</h2>
-              <span>{voiceStatus}</span>
-            </div>
-
-            <section className="transcript-box">
-              <span>{copy.transcript}</span>
-              <p>{question || copy.askPlaceholder}</p>
-            </section>
-
-            <section className="answer-box">
-              <span>{copy.answer}</span>
-              <p>{isThinking ? 'AI is thinking...' : aiResult.response}</p>
-            </section>
-
-            <form className="ask-form" onSubmit={(event) => {
-              event.preventDefault()
-              askAI(question)
-            }}>
-              <input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder={copy.askPlaceholder} />
-              <button type="submit" disabled={!question.trim() || isThinking}>{copy.ask}</button>
-            </form>
-
-            <div className="voice-actions">
-              <button type="button" onClick={() => startVoiceInput(setQuestion)}>{copy.voice}</button>
-              <button type="button" onClick={() => speakAnswer(aiResult.response)}>{copy.speak}</button>
-            </div>
-
-            <div className="quick-demo">
-              {copy.quickQuestions.map((item) => (
-                <button key={item} type="button" onClick={() => askAI(item)}>{item}</button>
-              ))}
-            </div>
-
-            <div className="ai-insights">
-              <MetricCard label={copy.intent} value={aiResult.intent} />
-              <MetricCard label={copy.risk} value={aiResult.riskLevel} tone={aiResult.riskLevel === 'High' ? 'danger' : aiResult.riskLevel === 'Medium' ? 'warning' : 'success'} />
-            </div>
-
-            <DataCard title={copy.source} className="compact-card">
-              <p className="body-copy">{aiResult.knowledgeSource}</p>
-            </DataCard>
-            <DataCard title={copy.compliance} className="compact-card warning-card">
-              <p className="body-copy">{aiResult.complianceWarning}</p>
-            </DataCard>
-            <DataCard title={copy.escalation} className="compact-card">
-              <p className="body-copy strong">{aiResult.escalation}</p>
-            </DataCard>
-            <DataCard title={copy.summary} className="compact-card">
-              <p className="body-copy">{aiResult.callSummary}</p>
-            </DataCard>
-          </aside>
-        </section>
-      </section>
-    </main>
+  return (
+    <section className="module-grid">
+      {modules.map(([title, text]) => (
+        <article className="module-card" key={title}>
+          <span>{title}</span>
+          <p>{text}</p>
+        </article>
+      ))}
+    </section>
   )
 }
 
 function App() {
-  const [callStarted, setCallStarted] = useState(false)
-  const [lang, setLang] = useState('uz')
-  const [phoneNumber, setPhoneNumber] = useState(customerData.phone)
-  const [activeNav, setActiveNav] = useState('Overview')
-  const [search, setSearch] = useState('')
-  const [question, setQuestion] = useState(labels.uz.initialQuestion)
-  const [isThinking, setIsThinking] = useState(false)
-  const [aiResult, setAiResult] = useState(() => answerCustomerQuestion(labels.uz.initialQuestion, 'uz', customerData))
-  const { voiceStatus, setVoiceStatus, startVoiceInput, speakAnswer } = useVoiceAssistant(lang)
+  const [language, setLanguage] = useState('uz')
+  const [input, setInput] = useState('')
+  const [voiceStatus, setVoiceStatus] = useState('Voice input ready')
+  const [isListening, setIsListening] = useState(false)
+  const [analysis, setAnalysis] = useState(initialAnalysis)
+  const [messages, setMessages] = useState([
+    { id: 1, role: 'Customer', text: 'Assalomu alaykum, kreditim bo‘yicha keyingi to‘lov qachonligini bilmoqchi edim.' },
+    { id: 2, role: 'Operator', text: 'Albatta, avval shaxsingizni tasdiqlab olamiz.' },
+    { id: 3, role: 'AI', text: initialAnalysis.response },
+  ])
+  const [reasons, setReasons] = useState(baseReasons)
+  const [unknownShare, setUnknownShare] = useState(13)
+  const [unknownClusters, setUnknownClusters] = useState(unknownSeeds)
+  const [categoryCreated, setCategoryCreated] = useState(false)
+  const [callSummary, setCallSummary] = useState('Loan due date detected with high confidence. Operator can answer after identity verification.')
+  const [currentTime] = useState(new Date().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }))
 
-  const copy = labels[lang]
-
-  function changeLanguage(nextLang) {
-    setLang(nextLang)
-    const nextQuestion = labels[nextLang].quickQuestions[0]
-    setQuestion(nextQuestion)
-    setAiResult(answerCustomerQuestion(nextQuestion, nextLang, customerData))
-    setVoiceStatus('Ready')
+  function updateDemand(category) {
+    setReasons((current) => current.map((item) => (
+      item.key === category ? { ...item, value: item.value + 1 } : item
+    )))
+    if (category === 'Unknown / needs clustering') {
+      setUnknownShare((value) => Math.min(value + 1, 30))
+    }
   }
 
-  function askAI(text) {
+  function runAnalysis(text) {
     const clean = text.trim()
-    if (!clean || isThinking) return
-    setQuestion(clean)
-    setIsThinking(true)
-    setVoiceStatus('Thinking...')
+    if (!clean) return
 
-    window.setTimeout(() => {
-      setAiResult(answerCustomerQuestion(clean, lang, customerData))
-      setIsThinking(false)
-      setVoiceStatus('Ready')
-    }, 900)
+    const result = analyzeCall(clean, language, customerData)
+    const nextId = Date.now()
+
+    setAnalysis(result)
+    setMessages((current) => [
+      ...current,
+      { id: nextId, role: 'Customer', text: clean },
+      { id: nextId + 1, role: 'AI', text: result.response },
+    ])
+    setCallSummary(`${result.category} detected. Confidence ${result.confidence}%. Escalation needed: ${result.escalation}.`)
+    setInput('')
+    updateDemand(result.category)
+
+    if (result.category === 'Unknown / needs clustering') {
+      setUnknownClusters((current) => current.includes('New similar banking question') ? current : [...current, 'New similar banking question'])
+    }
   }
 
-  function startCall(event) {
-    event.preventDefault()
-    if (!phoneNumber.trim()) return
-    setCallStarted(true)
+  function startListening() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      setVoiceStatus('Voice recognition is not supported in this browser. Use text input.')
+      return
+    }
+
+    try {
+      const recognition = new SpeechRecognition()
+      recognition.lang = language === 'ru' ? 'ru-RU' : 'uz-UZ'
+      recognition.interimResults = false
+      recognition.onstart = () => {
+        setIsListening(true)
+        setVoiceStatus('Listening...')
+      }
+      recognition.onresult = (event) => {
+        const text = event.results?.[0]?.[0]?.transcript || ''
+        setInput(text)
+        if (text) runAnalysis(text)
+      }
+      recognition.onerror = () => {
+        setVoiceStatus('Voice recognition failed. Text input still works.')
+        setIsListening(false)
+      }
+      recognition.onend = () => {
+        setVoiceStatus('Voice input ready')
+        setIsListening(false)
+      }
+      recognition.start()
+    } catch {
+      setVoiceStatus('Voice recognition failed. Text input still works.')
+      setIsListening(false)
+    }
+  }
+
+  function stopListening() {
+    setIsListening(false)
+    setVoiceStatus('Listening stopped. Text input is available.')
+  }
+
+  function speakAnswer() {
+    try {
+      if (!window.speechSynthesis) {
+        setVoiceStatus('Speech synthesis is not supported in this browser.')
+        return
+      }
+      const utterance = new SpeechSynthesisUtterance(analysis.response)
+      utterance.lang = language === 'ru' ? 'ru-RU' : 'uz-UZ'
+      window.speechSynthesis.cancel()
+      window.speechSynthesis.speak(utterance)
+      setVoiceStatus('Speaking AI answer...')
+    } catch {
+      setVoiceStatus('Speech output failed. The written suggestion is still available.')
+    }
+  }
+
+  function createCategory() {
+    setCategoryCreated(true)
+    setUnknownClusters((current) => current.filter((item) => item !== 'ATM cash withdrawal limit'))
+    setReasons((current) => current.map((item) => (
+      item.key === 'Unknown / needs clustering' ? { ...item, value: Math.max(item.value - 2, 1) } : item
+    )))
+    setUnknownShare((value) => Math.max(value - 2, 5))
   }
 
   return (
-    <div className="product-root">
-      <Dashboard
-        activeNav={activeNav}
-        setActiveNav={setActiveNav}
-        lang={lang}
-        setLang={changeLanguage}
-        copy={copy}
-        search={search}
-        setSearch={setSearch}
-        question={question}
-        setQuestion={setQuestion}
-        aiResult={aiResult}
-        askAI={askAI}
-        isThinking={isThinking}
-        voiceStatus={voiceStatus}
-        startVoiceInput={startVoiceInput}
-        speakAnswer={speakAnswer}
-        blurred={!callStarted}
-      />
+    <div className="app-shell">
+      <Sidebar />
+      <main className="workspace">
+        <Header language={language} setLanguage={setLanguage} currentTime={currentTime} />
 
-      {!callStarted && (
-        <section className="login-overlay" aria-label="Start call">
-          <form className="login-card" onSubmit={startCall}>
-            <div className="login-logo">SQB</div>
-            <h1>SQB AI Voice Agent</h1>
-            <p>{copy.subtitle}</p>
-            <label>
-              <span>{copy.phone}</span>
-              <input value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} placeholder="+998 90 123 45 67" />
-            </label>
-            <button type="submit">{copy.start}</button>
-          </form>
+        <section className="overview-grid">
+          <StatCard label="Total calls today" value="1,284" detail="Across SQB call center" />
+          <StatCard label="Detected call intents" value="87%" detail="13% routed to learning" />
+          <StatCard label="Auto-resolved simple calls" value="22%" detail="Repetitive questions" />
+          <StatCard label="Human escalation" value="78%" detail="Complex calls stay human" />
+          <StatCard label="Average handling time" value="3m 42s" detail="Target: -10%" />
+          <StatCard label="Customer sentiment" value="68% neutral" detail="21% worried, 11% angry" />
         </section>
-      )}
+
+        <section className="main-grid">
+          <div className="left-column">
+            <DemandAnalytics reasons={reasons} />
+
+            <section className="card">
+              <div className="section-title">
+                <div>
+                  <p className="eyebrow">Live call listener</p>
+                  <h2>Real-time customer conversation</h2>
+                </div>
+                <span className="listening-pill">{isListening ? 'Listening' : 'Standby'}</span>
+              </div>
+              <Transcript messages={messages} />
+              <div className="analysis-grid">
+                <span>Detected topic<b>{analysis.category}</b></span>
+                <span>Confidence<b>{analysis.confidence}%</b></span>
+                <span>Sentiment<b>{analysis.sentiment}</b></span>
+                <span>Escalation needed<b>{analysis.escalation}</b></span>
+              </div>
+              <div className="suggested-response">
+                <span>Suggested operator response</span>
+                <p>{analysis.response}</p>
+              </div>
+              <div className="warning-box">
+                <b>Compliance warning</b>
+                <p>{analysis.compliance}</p>
+              </div>
+              <div className="recommended-action">
+                <b>Recommended action</b>
+                <p>{analysis.action}</p>
+              </div>
+            </section>
+
+            <section className="card">
+              <div className="section-title">
+                <div>
+                  <p className="eyebrow">Voice / conversation simulation</p>
+                  <h2>Functional local demo</h2>
+                </div>
+                <span className="voice-status">{voiceStatus}</span>
+              </div>
+              <div className="control-row">
+                <button type="button" onClick={startListening}>Start listening</button>
+                <button type="button" onClick={stopListening}>Stop listening</button>
+                <button type="button" onClick={() => runAnalysis(input)}>Analyze conversation</button>
+                <button type="button" onClick={() => setMessages((current) => [...current, { id: Date.now(), role: 'Operator', text: analysis.response }])}>Use suggested response</button>
+                <button type="button" onClick={speakAnswer}>Speak AI answer</button>
+              </div>
+              <form className="text-input-row" onSubmit={(event) => {
+                event.preventDefault()
+                runAnalysis(input)
+              }}>
+                <input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Type customer question in Uzbek or Russian..." />
+                <button className="primary-button" type="submit">Analyze</button>
+              </form>
+              <div className="demo-buttons">
+                {demos.map((demo) => (
+                  <button key={demo.label} type="button" onClick={() => runAnalysis(demo.text)}>{demo.label}</button>
+                ))}
+              </div>
+            </section>
+
+            <PlatformCards />
+          </div>
+
+          <aside className="right-column">
+            <CustomerProfile />
+            <OperatorAssist analysis={analysis} />
+            <UnknownCalls unknownShare={unknownShare} clusters={unknownClusters} categoryCreated={categoryCreated} onCreate={createCategory} />
+
+            <section className="card">
+              <p className="eyebrow">Compliance guardrails</p>
+              <h2>Required rules</h2>
+              <ul className="guardrail-list">
+                <li>Do not ask PIN</li>
+                <li>Do not ask SMS code</li>
+                <li>Verify identity before personal account details</li>
+                <li>Do not guarantee loan approval</li>
+                <li>Escalate legal/complex complaints</li>
+              </ul>
+            </section>
+
+            <section className="card why-card">
+              <p className="eyebrow">Why this matters</p>
+              <h2>Human + AI operating model</h2>
+              <p>20–35% of calls are repetitive and can be answered automatically. The remaining calls are analyzed, clustered, and used to improve scripts, products, and AI categories.</p>
+              <div className="summary-box">{callSummary}</div>
+            </section>
+          </aside>
+        </section>
+      </main>
     </div>
   )
 }

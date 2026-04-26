@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 function speechLang(lang) {
   if (lang === 'ru') return 'ru-RU'
@@ -6,50 +6,127 @@ function speechLang(lang) {
   return 'uz-UZ'
 }
 
-export function useVoiceAssistant(lang) {
-  const [voiceStatus, setVoiceStatus] = useState('Ready')
-  const recognitionRef = useRef(null)
+const statusText = {
+  uz: {
+    ready: 'Tayyor',
+    listening: 'Tinglanmoqda...',
+    recorded: 'Ovoz yozib olindi. Brauzer transkripsiyani qo‘llamadi.',
+    unsupported: 'Brauzer transkripsiyani qo‘llamadi, audio yozuv fallback ishladi.',
+    denied: 'Mikrofonga ruxsat berilmadi.',
+    speaking: 'Javob o‘qilmoqda...',
+    failed: 'Ovoz tizimi ishlamadi.',
+  },
+  ru: {
+    ready: 'Готово',
+    listening: 'Слушаю...',
+    recorded: 'Голос записан. Браузер не поддержал транскрипцию.',
+    unsupported: 'Браузер не поддержал транскрипцию, сработала резервная аудиозапись.',
+    denied: 'Нет доступа к микрофону.',
+    speaking: 'Озвучиваю ответ...',
+    failed: 'Голосовая система недоступна.',
+  },
+  en: {
+    ready: 'Ready',
+    listening: 'Listening...',
+    recorded: 'Voice recorded. Browser transcription was not available.',
+    unsupported: 'Browser transcription was unavailable; fallback audio recording captured.',
+    denied: 'Microphone permission was denied.',
+    speaking: 'Speaking response...',
+    failed: 'Voice system is unavailable.',
+  },
+}
 
-  function startVoiceInput(onTranscript) {
+export function useVoiceAssistant(lang) {
+  const [voiceStatus, setVoiceStatus] = useState(statusText[lang]?.ready || 'Ready')
+  const [recordingUrl, setRecordingUrl] = useState('')
+  const recognitionRef = useRef(null)
+  const mediaRecorderRef = useRef(null)
+
+  async function startRecorderFallback(onTranscript, onComplete) {
+    const copy = statusText[lang] || statusText.en
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const chunks = []
+      const recorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = recorder
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunks.push(event.data)
+      }
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' })
+        const url = URL.createObjectURL(blob)
+        setRecordingUrl(url)
+        setVoiceStatus(copy.recorded)
+        stream.getTracks().forEach((track) => track.stop())
+        const transcript = copy.unsupported
+        onTranscript(transcript)
+        onComplete?.(transcript)
+      }
+
+      setVoiceStatus(copy.listening)
+      recorder.start()
+      window.setTimeout(() => {
+        if (recorder.state === 'recording') recorder.stop()
+      }, 4200)
+    } catch {
+      setVoiceStatus(copy.denied)
+    }
+  }
+
+  function startVoiceInput(onTranscript, onComplete) {
+    const copy = statusText[lang] || statusText.en
+
     try {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
 
       if (!SpeechRecognition) {
-        setVoiceStatus('Voice input is not supported in this browser. Please type instead.')
+        startRecorderFallback(onTranscript, onComplete)
         return
       }
 
-      if (recognitionRef.current) {
-        recognitionRef.current.stop()
-      }
+      if (recognitionRef.current) recognitionRef.current.stop()
 
       const recognition = new SpeechRecognition()
       recognitionRef.current = recognition
       recognition.lang = speechLang(lang)
-      recognition.interimResults = false
+      recognition.interimResults = true
+      recognition.continuous = false
       recognition.maxAlternatives = 1
-      setVoiceStatus('Listening...')
+      setVoiceStatus(copy.listening)
+
+      let finalTranscript = ''
 
       recognition.onresult = (event) => {
-        const transcript = event.results?.[0]?.[0]?.transcript || ''
-        if (transcript) onTranscript(transcript)
+        const transcript = Array.from(event.results)
+          .map((result) => result[0]?.transcript || '')
+          .join(' ')
+          .trim()
+        if (transcript) {
+          finalTranscript = transcript
+          onTranscript(transcript)
+        }
       }
       recognition.onerror = () => {
-        setVoiceStatus('Voice input is not supported in this browser. Please type instead.')
+        startRecorderFallback(onTranscript, onComplete)
       }
       recognition.onend = () => {
-        setVoiceStatus((current) => (current === 'Listening...' ? 'Ready' : current))
+        setVoiceStatus(copy.ready)
+        if (finalTranscript) onComplete?.(finalTranscript)
       }
       recognition.start()
     } catch {
-      setVoiceStatus('Voice input is not supported in this browser. Please type instead.')
+      startRecorderFallback(onTranscript, onComplete)
     }
   }
 
-  function speakAnswer(aiAnswer) {
+  const speakAnswer = useCallback((aiAnswer) => {
+    const copy = statusText[lang] || statusText.en
+
     try {
       if (!('speechSynthesis' in window) || !aiAnswer) {
-        setVoiceStatus('Voice output is not available. Please read the answer on screen.')
+        setVoiceStatus(copy.failed)
         return
       }
 
@@ -58,19 +135,17 @@ export function useVoiceAssistant(lang) {
       utterance.lang = speechLang(lang)
 
       const voices = window.speechSynthesis.getVoices()
-      const targetVoice = voices.find((voice) => voice.lang === utterance.lang)
-      if (targetVoice) {
-        utterance.voice = targetVoice
-      }
+      const targetVoice = voices.find((voice) => voice.lang === utterance.lang || voice.lang.startsWith(lang))
+      if (targetVoice) utterance.voice = targetVoice
 
-      utterance.onstart = () => setVoiceStatus('Speaking...')
-      utterance.onend = () => setVoiceStatus('Ready')
-      utterance.onerror = () => setVoiceStatus('Voice output failed. Please read the answer on screen.')
+      utterance.onstart = () => setVoiceStatus(copy.speaking)
+      utterance.onend = () => setVoiceStatus(copy.ready)
+      utterance.onerror = () => setVoiceStatus(copy.failed)
       window.speechSynthesis.speak(utterance)
     } catch {
-      setVoiceStatus('Voice output failed. Please read the answer on screen.')
+      setVoiceStatus(copy.failed)
     }
-  }
+  }, [lang])
 
-  return { voiceStatus, setVoiceStatus, startVoiceInput, speakAnswer }
+  return { voiceStatus, setVoiceStatus, recordingUrl, startVoiceInput, speakAnswer }
 }

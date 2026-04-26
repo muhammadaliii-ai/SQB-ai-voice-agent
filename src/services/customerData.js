@@ -3,7 +3,6 @@ export const customerData = {
   phone: '+998 90 123 45 67',
   clientId: 'SQB-204918',
   kycStatus: 'Verified',
-  riskScore: '18 / 100 Low',
   totalBalance: '14,250,000 so‘m',
   depositBalance: '25,000,000 so‘m',
   cards: [
@@ -24,9 +23,9 @@ export const customerData = {
     { amount: '500,000 so‘m', merchant: 'ATM withdrawal', type: 'Cash' },
   ],
   supportHistory: [
-    '18.04.2026 — SQB Mobile login reset',
-    '09.04.2026 — HUMO limit increased',
-    '22.03.2026 — Loan payment reminder',
+    '18.04.2026 - SQB Mobile login reset',
+    '09.04.2026 - HUMO limit increased',
+    '22.03.2026 - Loan payment reminder',
   ],
   securityAlerts: [
     'No active card blocks',
