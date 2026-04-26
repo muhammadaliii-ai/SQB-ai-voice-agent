@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --configLoader native",
+    "dev": "vite",
     "server": "node server/index.js",
-    "build": "vite build --configLoader native --emptyOutDir false",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
