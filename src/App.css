@@ -139,6 +139,34 @@ input:focus-visible {
   flex-wrap: wrap;
 }
 
+.language-switch {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 3px;
+  background: var(--card);
+  box-shadow: 0 10px 24px rgba(25, 42, 70, 0.04);
+}
+
+.language-switch button {
+  min-width: 38px;
+  min-height: 30px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--muted);
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.language-switch button.active {
+  color: #fff;
+  background: var(--blue);
+}
+
 .live-status,
 .header-actions time,
 .listening-pill,
